@@ -14,8 +14,7 @@ public class BackLightTile extends TileService {
     @Override
     public void onClick() {
         if (!Lights.canWrite(this)) {
-            startActivityAndCollapse(new android.content.Intent(this, MainActivity.class)
-                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+            Open.app(this);
             return;
         }
         L.setBackMode(this, (L.backMode(this) + 1) % 3);

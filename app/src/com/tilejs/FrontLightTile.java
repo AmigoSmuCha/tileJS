@@ -14,8 +14,7 @@ public class FrontLightTile extends TileService {
     @Override
     public void onClick() {
         if (!Lights.canWrite(this)) {
-            startActivityAndCollapse(new android.content.Intent(this, MainActivity.class)
-                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+            Open.app(this);
             return;
         }
         Lights.setFront(this, !Lights.frontOn(this));

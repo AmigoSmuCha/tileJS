@@ -48,25 +48,9 @@ public class ChargeTile extends TileService {
         t.updateTile();
     }
 
-    /** The phone's "battery health / charge limit" screen, or the nearest thing to it. */
+    /** The phone's battery settings (where its charge limit lives). */
     private void openChargeSettings() {
-        android.content.Intent[] tries = {
-                // the Unihertz fragment inside the Settings app
-                new android.content.Intent()
-                        .setClassName("com.android.settings", "com.android.settings.SubSettings")
-                        .putExtra(":settings:show_fragment",
-                                "com.agui.settings.fuelgauge.BatteryHealthSettings"),
-                new android.content.Intent(android.content.Intent.ACTION_POWER_USAGE_SUMMARY),
-                new android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
-        };
-        for (android.content.Intent i : tries) {
-            i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                if (i.resolveActivity(getPackageManager()) == null) continue;
-                startActivityAndCollapse(i);
-                return;
-            } catch (Throwable ignored) {
-            }
-        }
+        Open.from(this, new android.content.Intent(
+                android.content.Intent.ACTION_POWER_USAGE_SUMMARY));
     }
 }
