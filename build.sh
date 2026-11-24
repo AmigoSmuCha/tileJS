@@ -60,6 +60,8 @@ for lib in api aidl provider shared; do
         curl -fsSL --retry 3 -o "build/$lib.aar" \
             "https://repo1.maven.org/maven2/dev/rikka/shizuku/$lib/$SHIZUKU_VERSION/$lib-$SHIZUKU_VERSION.aar"
         unzip -p "build/$lib.aar" classes.jar > "libs/shizuku-$lib.jar"
+        echo "-- $lib.aar:"; unzip -l "build/$lib.aar" | awk '{print $4}' | grep -v '^$' | head -30
+        echo "-- $lib classes.jar:"; unzip -l "libs/shizuku-$lib.jar" | awk '{print $4}' | grep -E '\.class$' | head -30
     fi
 done
 
