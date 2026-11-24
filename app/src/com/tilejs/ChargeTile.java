@@ -38,7 +38,7 @@ public class ChargeTile extends TileService {
         boolean active = L.chargeActive(this);
         if (!Agui.available()) {
             t.setState(Tile.STATE_UNAVAILABLE);
-            t.setSubtitle("not supported");
+            t.setSubtitle(Sh.running() ? "allow in Shizuku" : "Shizuku off");
         } else {
             t.setState(active ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
             t.setSubtitle(active ? "to " + L.chargeTarget(this) + "%" : "once to "
