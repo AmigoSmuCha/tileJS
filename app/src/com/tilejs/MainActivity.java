@@ -154,7 +154,9 @@ public class MainActivity extends Activity {
         status.setText("charge limit service: " + (charge ? "reachable" : "NOT reachable")
                 + "\n  " + how
                 + "\nmodify system settings: " + (write ? "allowed" : "not allowed")
-                + "\nandroid " + Build.VERSION.RELEASE);
+                + "\nandroid " + Build.VERSION.RELEASE
+                + (L.p(this).getString("light_err", "").isEmpty() ? ""
+                        : "\nlights: " + L.p(this).getString("light_err", "")));
         if (charge) {
             // read the real stored limit once, off the main thread, as proof it works
             new Thread(new Runnable() {
