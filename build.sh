@@ -41,7 +41,7 @@ echo "platform:    $PLATFORM"
 echo "version:     $VERSION_NAME ($VERSION_CODE)"
 
 rm -rf build
-mkdir -p build/classes build/dex
+mkdir -p build/classes build/dex build/gen
 
 echo "== resources"
 "$TOOLS/aapt2" compile --dir app/res -o build/res.zip
@@ -49,12 +49,13 @@ echo "== resources"
     --manifest app/AndroidManifest.xml \
     --min-sdk-version "$MIN_SDK" --target-sdk-version "$TARGET_SDK" \
     --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
+    --java build/gen \
     build/res.zip
 
 echo "== code"
 # Java 8 language level; the Android classes come from android.jar
 javac --release 8 -Xlint:-options -proc:none -encoding UTF-8 \
-    -classpath "$ANDROID_JAR" -d build/classes $(find app/src -name '*.java')
+    -classpath "$ANDROID_JAR" -d build/classes $(find app/src build/gen -name '*.java')
 jar cf build/classes.jar -C build/classes .
 "$TOOLS/d8" --release --min-api "$MIN_SDK" --lib "$ANDROID_JAR" --output build/dex build/classes.jar
 
