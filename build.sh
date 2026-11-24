@@ -52,12 +52,24 @@ echo "== resources"
     --java build/gen \
     build/res.zip
 
+echo "== libraries (Shizuku)"
+SHIZUKU_VERSION=13.1.5
+mkdir -p libs
+for lib in api aidl; do
+    if [ ! -f "libs/shizuku-$lib.jar" ]; then
+        curl -fsSL --retry 3 -o "build/$lib.aar" \
+            "https://repo1.maven.org/maven2/dev/rikka/shizuku/$lib/$SHIZUKU_VERSION/$lib-$SHIZUKU_VERSION.aar"
+        unzip -p "build/$lib.aar" classes.jar > "libs/shizuku-$lib.jar"
+    fi
+done
+
 echo "== code"
 # Java 8 language level; the Android classes come from android.jar
 javac --release 8 -Xlint:-options -proc:none -encoding UTF-8 \
     -classpath "$ANDROID_JAR" -d build/classes $(find app/src build/gen -name '*.java')
 jar cf build/classes.jar -C build/classes .
-"$TOOLS/d8" --release --min-api "$MIN_SDK" --lib "$ANDROID_JAR" --output build/dex build/classes.jar
+"$TOOLS/d8" --release --min-api "$MIN_SDK" --lib "$ANDROID_JAR" --output build/dex \
+    build/classes.jar libs/shizuku-api.jar libs/shizuku-aidl.jar
 
 echo "== package and sign"
 zip -q -j build/unsigned.apk build/dex/classes.dex

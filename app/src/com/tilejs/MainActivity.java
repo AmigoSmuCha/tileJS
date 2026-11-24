@@ -59,6 +59,25 @@ public class MainActivity extends Activity {
         root.addView(section("one-time full charge"));
         chargeLabel = text(12, INK, false);
         root.addView(chargeLabel);
+        root.addView(button("allow tileJS in Shizuku (opens Shizuku)", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Sh.running()) {
+                    Sh.request();
+                } else {
+                    Intent i = getPackageManager().getLaunchIntentForPackage(Sh.MANAGER);
+                    if (i != null) {
+                        startActivity(i);
+                    } else {
+                        try {
+                            startActivity(new Intent(Intent.ACTION_VIEW,
+                                    Uri.parse("https://github.com/RikkaApps/Shizuku/releases")));
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            }
+        }));
         LinearLayout targetRow = new LinearLayout(this);
         targetRow.setOrientation(LinearLayout.HORIZONTAL);
         targetRow.addView(button("-5%", new View.OnClickListener() {
@@ -127,15 +146,35 @@ public class MainActivity extends Activity {
     }
 
     private void refresh() {
-        boolean charge = Agui.available();
+        final boolean charge = Agui.available();
         boolean write = Lights.canWrite(this);
+        String how = Sh.granted() ? "through Shizuku"
+                : Sh.running() ? "Shizuku is running, tileJS is not allowed yet"
+                : "Shizuku is not running";
         status.setText("charge limit service: " + (charge ? "reachable" : "NOT reachable")
+                + "\n  " + how
                 + "\nmodify system settings: " + (write ? "allowed" : "not allowed")
                 + "\nandroid " + Build.VERSION.RELEASE);
-        chargeLabel.setText(charge
-                ? "Charges once to " + L.chargeTarget(this) + "%, then restores the 80% limit."
-                : "This phone does not let an app reach the charge service, so this part "
-                        + "cannot work without Shizuku. The lights still work.");
+        if (charge) {
+            // read the real stored limit once, off the main thread, as proof it works
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final String v = Agui.getString(Agui.KEY_CUSTOM, "?");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            chargeLabel.setText("Charges once to " + L.chargeTarget(
+                                    MainActivity.this) + "%, then restores the saved limit."
+                                    + "\nstored limit now: " + v);
+                        }
+                    });
+                }
+            }).start();
+        } else {
+            chargeLabel.setText("Install Shizuku, start it (wireless debugging or adb), "
+                    + "then allow tileJS. The lights work without it.");
+        }
         backLabel.setText(String.format(Locale.US, "scheduled: on at %s, off at %s",
                 hhmm(L.backOnMinutes(this)), hhmm(L.backOffMinutes(this))));
         String report = L.crash(this);

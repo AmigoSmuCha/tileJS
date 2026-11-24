@@ -40,11 +40,62 @@ final class Agui {
         }
     }
 
+    /** Reachable through Shizuku (preferred, this phone blocks apps) or directly. */
     static boolean available() {
-        return service() != null;
+        return Sh.granted() || service() != null;
+    }
+
+    // ---- through Shizuku: `service call agui_common <code> ...` as the shell user ----
+
+    /** The 32-bit words of a `service call` reply, or null if it failed. */
+    private static long[] words(String out) {
+        if (out == null) return null;
+        java.util.ArrayList<Long> w = new java.util.ArrayList<>();
+        boolean in = false;
+        for (String line : out.split("\n")) {
+            int p = line.indexOf("Parcel(");
+            if (p >= 0) {
+                in = true;
+                line = line.substring(p + 7);
+            }
+            if (!in) continue;
+            int q = line.indexOf('\'');
+            if (q >= 0) line = line.substring(0, q);
+            line = line.replaceAll("0x[0-9a-fA-F]+:", "").replace(")", "");
+            for (String t : line.trim().split("\\s+")) {
+                if (t.matches("[0-9a-fA-F]{8}")) w.add(Long.parseLong(t, 16));
+            }
+        }
+        if (w.isEmpty()) return null;
+        long[] r = new long[w.size()];
+        for (int i = 0; i < r.length; i++) r[i] = w.get(i);
+        return r;
+    }
+
+    private static boolean shellOk(String out) {
+        long[] w = words(out);
+        return w != null && w[0] == 0;
+    }
+
+    private static String shellString(String out, String def) {
+        long[] w = words(out);
+        if (w == null || w[0] != 0 || w.length < 2) return def;
+        int len = (int) w[1];
+        if (len < 0) return def;
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < len; i++) {
+            int idx = 2 + i / 2;
+            if (idx >= w.length) break;
+            b.append((char) ((w[idx] >> (16 * (i % 2))) & 0xFFFF));
+        }
+        return b.toString();
     }
 
     static String getString(String key, String def) {
+        if (Sh.granted()) {
+            return shellString(Sh.run("service", "call", SERVICE, "3",
+                    "s16", key, "s16", def), def);
+        }
         IBinder b = service();
         if (b == null) return def;
         Parcel data = Parcel.obtain(), reply = Parcel.obtain();
@@ -66,6 +117,10 @@ final class Agui {
 
     /** True if the write went through without the binder refusing it. */
     static boolean putString(String key, String value) {
+        if (Sh.granted()) {
+            return shellOk(Sh.run("service", "call", SERVICE, "4",
+                    "s16", key, "s16", value));
+        }
         IBinder b = service();
         if (b == null) return false;
         Parcel data = Parcel.obtain(), reply = Parcel.obtain();
@@ -85,6 +140,10 @@ final class Agui {
     }
 
     static boolean setBatteryChargingStatus(boolean on) {
+        if (Sh.granted()) {
+            return shellOk(Sh.run("service", "call", SERVICE, "7",
+                    "i32", on ? "1" : "0"));
+        }
         IBinder b = service();
         if (b == null) return false;
         Parcel data = Parcel.obtain(), reply = Parcel.obtain();
