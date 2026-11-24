@@ -49,7 +49,6 @@ echo "== resources"
     --manifest app/AndroidManifest.xml \
     --min-sdk-version "$MIN_SDK" --target-sdk-version "$TARGET_SDK" \
     --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
-    -A app/assets -0 ttf \
     build/res.zip
 
 echo "== code"
